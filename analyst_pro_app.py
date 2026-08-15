@@ -620,8 +620,17 @@ def render_explore_tab() -> None:
         y_col = c2.selectbox("Y (scatter):", numeric_cols, index=min(1, len(numeric_cols)-1), key="scatter_y")
         color_opts = ["(none)"] + [c for c in categorical_cols if df[c].nunique() <= 10]
         color_col = st.selectbox("Color by (optional):", color_opts, key="scatter_color")
-        fig2 = px.scatter(df, x=x_col, y=y_col, color=None if color_col == "(none)" else color_col,
-                           trendline="ols", title=f"{x_col} vs {y_col}")
+        color_arg = None if color_col == "(none)" else color_col
+        try:
+            # Trendline requires statsmodels under the hood; on some hosted
+            # environments a plotly/narwhals version mismatch makes this
+            # raise a DuplicateError. Fall back to a plain scatter if so.
+            fig2 = px.scatter(df, x=x_col, y=y_col, color=color_arg,
+                               trendline="ols", title=f"{x_col} vs {y_col}")
+        except Exception:
+            fig2 = px.scatter(df, x=x_col, y=y_col, color=color_arg,
+                               title=f"{x_col} vs {y_col}")
+            st.caption("ℹ️ Trend line unavailable in this environment — showing scatter without it.")
         st.plotly_chart(fig2, use_container_width=True)
     else:
         st.info("Need at least two numeric columns for correlation analysis.")
