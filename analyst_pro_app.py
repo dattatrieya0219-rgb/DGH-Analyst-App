@@ -1181,6 +1181,21 @@ def render_model_tab() -> None:
 # --------------------------------------------------------------------------- #
 # TAB 6 — REPORT
 # --------------------------------------------------------------------------- #
+def df_to_markdown(df: pd.DataFrame, index: bool = True) -> str:
+    """
+    Convert a DataFrame to a Markdown table without depending on the
+    optional `tabulate` package (which may not be installed in all
+    hosting environments).
+    """
+    work = df.reset_index() if index else df.copy()
+    headers = [str(c) for c in work.columns]
+    rows = work.astype(str).values.tolist()
+    header_line = "| " + " | ".join(headers) + " |"
+    sep_line = "| " + " | ".join(["---"] * len(headers)) + " |"
+    body_lines = ["| " + " | ".join(row) + " |" for row in rows]
+    return "\n".join([header_line, sep_line] + body_lines)
+
+
 def build_markdown_report() -> str:
     """Compile everything done in this session into a Markdown report."""
     df = st.session_state.df
@@ -1207,13 +1222,13 @@ def build_markdown_report() -> str:
     if numeric_cols:
         lines.append("## 3. Descriptive Statistics (numeric columns)")
         desc = df[numeric_cols].describe().T.round(3)
-        lines.append(desc.to_markdown())
+        lines.append(df_to_markdown(desc, index=True))
         lines.append("")
 
     lines.append("## 4. Hypothesis Test Results")
     if st.session_state.test_results:
         test_df = pd.DataFrame(st.session_state.test_results)
-        lines.append(test_df.to_markdown(index=False))
+        lines.append(df_to_markdown(test_df, index=False))
     else:
         lines.append("*No hypothesis tests were run in this session.*")
     lines.append("")
@@ -1224,7 +1239,7 @@ def build_markdown_report() -> str:
         lines.append(f"**{reg['type']}** — Target: `{reg['target']}` | Predictors: {', '.join(reg['features'])}")
         fit_stat = reg.get("r_squared", reg.get("pseudo_r_squared"))
         lines.append(f"Model fit: **{fit_stat}**\n")
-        lines.append(reg["summary"].to_markdown())
+        lines.append(df_to_markdown(reg["summary"], index=True))
     else:
         lines.append("*No regression model was fit in this session.*")
     lines.append("")
@@ -1234,7 +1249,7 @@ def build_markdown_report() -> str:
         meta = st.session_state.model_meta
         lines.append(f"**Problem type:** {meta['problem_type']} | **Target:** `{meta['target']}` | "
                       f"**Features:** {', '.join(meta['features'])}\n")
-        lines.append(st.session_state.model_comparison.to_markdown(index=False))
+        lines.append(df_to_markdown(st.session_state.model_comparison, index=False))
         best = st.session_state.model_comparison.iloc[0]["Model"]
         lines.append(f"\n**Best performing model: {best}**")
     else:
