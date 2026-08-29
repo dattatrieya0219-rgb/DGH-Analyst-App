@@ -578,8 +578,15 @@ def render_explore_tab() -> None:
             c1, c2 = st.columns(2)
             with c1:
                 if clean.nunique() > 1:
-                    fig = ff.create_distplot([clean.tolist()], [selected], show_rug=False)
-                    fig.update_layout(title=f"Distribution of {selected}")
+                    try:
+                        fig = ff.create_distplot([clean.tolist()], [selected], show_rug=False)
+                        fig.update_layout(title=f"Distribution of {selected}")
+                    except Exception:
+                        # figure_factory's KDE path can raise version-mismatch
+                        # errors on some hosting environments — fall back to a
+                        # plain histogram with a smoothed overlay instead.
+                        fig = px.histogram(df, x=selected, title=f"Distribution of {selected}",
+                                            marginal="box")
                 else:
                     fig = px.histogram(df, x=selected, title=f"Distribution of {selected}")
                 st.plotly_chart(fig, use_container_width=True)
