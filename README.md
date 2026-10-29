@@ -34,5 +34,6 @@ streamlit run analyst_pro_app.py
 
 ## Author
 
-**Dattatrieya G H** — Data Analyst | SQL • Power BI • Excel • R • Python • GenAI
+**Dattatrieya G H** — Data Analyst | SQL • Power BI • Excel • R • Python • GenAI            
+
  LinkedIn: https://www.linkedin.com/in/dattatrieya-honnikhere-631808389
